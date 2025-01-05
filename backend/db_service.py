@@ -10,16 +10,15 @@ class DatabaseService :
         self.client = pymongo.MongoClient(os.getenv("DB_CONNECTION_STRING"))
         self.db = db_name
         self.collection = collection_name
-
+        self.embedding_instance = EmbeddingOperation()
     def create_embeddings_for_data(self): 
-        eb = EmbeddingOperation()
         database = self.client[self.db]
         collection = database[self.collection]
         docs = collection.find()
         for doc in docs : 
-            if doc["text"]: 
-                embedding = eb.embedding_operation(text = doc["text"])
-                doc.update_one(
+            if doc["text"] and "embedding" not in doc: 
+                embedding = self.embedding_instance.embedding_operation(content = doc["text"])
+                collection.update_one(
                     {"_id": doc["_id"]}, 
                     {"$set": {"embedding":embedding}}
                 )
@@ -38,6 +37,14 @@ class DatabaseService :
             db_text = text[start:end].strip()
             collection.insert_one({
                 "text": db_text
+            })
+        pattern = r'(?<=####\n)(.*?)(?=\n####)'
+        with open('backend/test2.md', 'r', encoding='utf-8') as file:
+            content = file.read()
+        matches = re.findall(pattern, content, re.DOTALL)
+        for match in matches : 
+            collection.insert_one({
+                "text": match
             })
 
 

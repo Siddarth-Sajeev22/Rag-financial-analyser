@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class EmbeddingOperation: 
-    def __init__(): 
+    def __init__(self): 
         genai.configure(api_key = os.getenv("GOOGLE_API_KEY"))
 
     def embedding_operation(self, *args, **kwargs): 
@@ -14,6 +14,6 @@ class EmbeddingOperation:
             model="models/text-embedding-004",
             content=content,
             task_type="retrieval_document",
-            title="Embedding of single string")
+        )
         return result 
     

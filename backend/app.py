@@ -18,6 +18,7 @@ def enter_data_to_db(db_request: DatabaseRequest):
     db_credentials = db_request.model_dump()
     db_service = DatabaseService(**db_credentials)
     db_service.insert_drhp_data_to_db()
+    db_service.create_embeddings_for_data()
 
 if __name__ == "__main__":
     import uvicorn
