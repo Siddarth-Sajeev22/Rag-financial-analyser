@@ -10,7 +10,10 @@ class DatabaseService :
 
     def create_embeddings_for_data(self): 
         eb = EmbeddingOperation()
-        for doc in self.collection : 
+        database = self.db
+        collection = database[self.collection]
+        docs = collection.find()
+        for doc in docs : 
             if doc["text"]: 
                 embedding = eb.embedding_operation(text = doc["text"])
                 doc.update_one(
@@ -19,6 +22,8 @@ class DatabaseService :
                 )
     
     def insert_drhp_data_to_db(self): 
+        database = self.database
+        collection = database[self.collection]
         pattern = r'(?m)^(\d+)\s' 
         with open('drhp.md', 'r', encoding='utf-8') as file : 
             text = file.read()
@@ -28,7 +33,7 @@ class DatabaseService :
             end = matches[i+1].end if i + 1 < len(matches) else len(text)
 
             db_text = text[start:end]
-            self.collection.insert_one({
+            collection.insert_one({
                 {"text": db_text}
             })
 
