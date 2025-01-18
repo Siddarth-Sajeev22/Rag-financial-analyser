@@ -4,3 +4,4 @@ groq
 dotenv
 google-generativeai
 pymongo
+networkx

@@ -11,6 +11,16 @@ class DatabaseService :
         self.db = db_name
         self.collection = collection_name
         self.embedding_instance = EmbeddingOperation()
+    
+    def get_all_data(self): 
+        database = self.client[self.db]
+        collection = database[self.collection]
+        docs = collection.find()
+        data = []
+        for doc in docs : 
+            data.append(doc["text"])
+        return data
+        
     def create_embeddings_for_data(self): 
         database = self.client[self.db]
         collection = database[self.collection]
