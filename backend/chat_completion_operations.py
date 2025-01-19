@@ -120,3 +120,12 @@ class ChatCompletion :
         user_message = entities_and_relations
         response = self.make_completion_request(system_message=system_message, user_message=user_message)
         return response 
+    
+    def summarize_communites(self, description): 
+        system_message = """ You are an expert in analyzing and summarizing data graphs. Your task is to summarize communities of entities and their relationships in a graph. For each community, provide a meaningful description, including key entities, their roles, the primary relationships between them, and any notable insights.
+        """
+
+        user_message = f"""The following is a description of a community extracted from a graph:\n\n{description}\n\n.Please summarize this community, highlighting its key entities, relationships and significance."""
+        
+        response = self.make_completion_request(system_message=system_message, user_message=user_message)
+        return response 

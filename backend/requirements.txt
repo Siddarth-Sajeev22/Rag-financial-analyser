@@ -5,3 +5,5 @@ dotenv
 google-generativeai
 pymongo
 networkx
+cdlib
+leidenalg
