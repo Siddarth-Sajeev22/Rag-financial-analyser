@@ -56,6 +56,15 @@ class DatabaseService :
             collection.insert_one({
                 "text": match
             })
+    
+    def insert_community_summary_into_database(self, collection_name, all_community_data): 
+        database = self.client[self.db]
+        collection = database[collection_name]
+        for community_data in all_community_data:
+            collection.insert_one({
+                "community_data": community_data
+            })
+
 
 
     

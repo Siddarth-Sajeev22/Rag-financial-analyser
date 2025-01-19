@@ -3,12 +3,13 @@ from db_service import DatabaseService
 import networkx as nx 
 from cdlib import algorithms
 
-db = DatabaseService(db_name = "standard_glass_lining", collection_name="drhp")
-ch = ChatCompletion()
-
 class GraphRag: 
-    def split_doc_into_chunks():
-        docs = db.get_all_data()
+    def __init__(self, db_name, collection_name):
+        self.db = DatabaseService(db_name = db_name, collection_name= collection_name)
+        self.ch = ChatCompletion()
+
+    def split_doc_into_chunks(self):
+        docs = self.db.get_all_data()
         chunk_size = 600
         overlap_size = 100
         chunks = []
@@ -17,10 +18,10 @@ class GraphRag:
                 chunks.append(doc[i: i+chunk_size])
         return chunks
 
-    def extract_entitites_and_relationships(chunks): 
+    def extract_entitites_and_relationships(self, chunks): 
         entities_and_relations = []
         for chunk in chunks : 
-            response = ch.get_entities_and_relationships_from_chunk(chunk)
+            response = self.ch.get_entities_and_relationships_from_chunk(chunk)
             entities_and_relations.append(response)
         with open("result1.md", "w", encoding="utf-8") as f: 
             for a in entities_and_relations:
@@ -28,10 +29,10 @@ class GraphRag:
                 f.write("End of one iteration")
         return entities_and_relations
 
-    def summarize_relationships(entities_and_relations): 
+    def summarize_relationships(self, entities_and_relations): 
         summarized_relationships = []
         for node in entities_and_relations: 
-            response = ch.summarize_relationships(node)
+            response = self.ch.summarize_relationships(node)
             summarized_relationships.append(response)
         with open("result2.md", "w", encoding="utf-8") as f: 
             for a in summarized_relationships:
@@ -39,7 +40,7 @@ class GraphRag:
                 f.write("End of one iteration")
         return summarized_relationships
 
-    def build_graph(summaries):
+    def build_graph(self, summaries):
         G = nx.Graph()
         for node in summaries :
             lines = node.split("\n") 
@@ -96,7 +97,7 @@ class GraphRag:
                             label = part.strip()
         return G
 
-    def create_communities(G):
+    def create_communities(self, G):
         mapping = {node: idx for idx, node in enumerate(G.nodes())}
         reverse_mapping = {idx: node for node, idx in mapping.items()}
         graph = nx.relabel_nodes(G, mapping)
@@ -126,11 +127,15 @@ class GraphRag:
             edges = subgraph.edges(data=True)
             description = "Entities : \n"
             for node in nodes : 
-                description += f"{node[0]}: {node[1]['label']}\n"
+                if isinstance(node[1], dict) and "label" in node[1]:
+                    label = node[1]['label']
+                else:
+                    label = ""
+                description += f"{node[0]}: {label}\n"
             description += "Relationships : "
             for edge in edges : 
                 description += f"{edge[0]} -> {edge[2]['label']} -> {edge[1]}, "
-            community_summary = ch.summarize_communites(description)
+            community_summary = self.ch.summarize_communites(description)
             all_communities_summary.append(community_summary)
         with open("result4.md", "w", encoding="utf-8") as f: 
             for a in all_communities_summary:
@@ -138,4 +143,12 @@ class GraphRag:
                 f.write(a)
                 f.write("\n###\n")
         self.all_communities_summary = all_communities_summary
+        self.db.insert_community_summary_into_database("community_data", all_communities_summary)
 
+    def initialise_graph_rag_pipeline(self): 
+        chunks = self.split_doc_into_chunks()
+        entities_and_relations = self.extract_entitites_and_relationships(chunks)
+        summarized_relationships = self.summarize_relationships(entities_and_relations)
+        G = self.build_graph(summarized_relationships)
+        communities = self.create_communities(G)    
+        self.summarize_communities(communities, G)

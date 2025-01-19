@@ -37,11 +37,19 @@ class ChatCompletion :
                 response_text += chunk.choices[0].delta.content
         return response_text
 
-    def generate_rag_answer(self, *args, **kwargs):
-        df = self.create_df_for_rag()
-        system_message = """
-            You are an AI assistant that will help in making informed decisions regarding whether or not a given IPO is good fundamentally to buy in the stock market. You will be provided context regarding the IPO from a DRHP document and you will provide information to the user on the basis of the context provided to you only. Do not try to provide any information that is not available from the context
-        """
+    def generate_answers_from_communities(self, community_summaries, query):
+        intermediate_answers = []
+        for index, summary in enumerate(community_summaries):
+            print(f"Summary index {index} of {len(community_summaries)}:")
+            system_message = "Answer the following query based on the provided summary."
+            user_message = f"Query: {query} Summary: {summary}"
+            response = self.make_completion_request(system_message, user_message)
+            print("Intermediate answer:", response)
+            intermediate_answers.append(response)
+        system_message = "Combine these answers into a final, concise response."
+        user_message = f"Intermediate answers: {intermediate_answers}"
+        final_response = self.make_completion_request(system_message, user_message)
+        return final_response
 
     
     def get_entities_and_relationships_from_chunk(self, chunk): 
