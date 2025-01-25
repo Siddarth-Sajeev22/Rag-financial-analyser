@@ -3,7 +3,7 @@ uvicorn
 groq 
 dotenv
 google-generativeai
-pymongo
+motor
 networkx
 cdlib
 leidenalg

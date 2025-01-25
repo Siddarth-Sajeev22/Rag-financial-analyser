@@ -1,4 +1,4 @@
-from groq import Groq
+from groq import AsyncGroq
 from dotenv import load_dotenv
 import os 
 
@@ -6,15 +6,15 @@ load_dotenv()
 
 class ChatCompletion : 
     def __init__(self): 
-        self.client = Groq(
+        self.client = AsyncGroq(
             api_key = os.getenv("GROQ_API_KEY")
         )
     
-    def make_completion_request(self, *args, **kwargs): 
+    async def make_completion_request(self, *args, **kwargs): 
         system_message = kwargs.get("system_message")
         user_message = kwargs.get("user_message")
-        completion = self.client.chat.completions.create(
-            model="llama-3.1-70b-versatile",
+        completion = await self.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "system", 
@@ -32,27 +32,27 @@ class ChatCompletion :
             stop=None,
         )
         response_text = ""
-        for chunk in completion:
+        async for chunk in completion:
             if chunk.choices[0].delta.content: 
                 response_text += chunk.choices[0].delta.content
         return response_text
 
-    def generate_answers_from_communities(self, community_summaries, query):
+    async def generate_answers_from_communities(self, community_summaries, query):
         intermediate_answers = []
         for index, summary in enumerate(community_summaries):
             print(f"Summary index {index} of {len(community_summaries)}:")
             system_message = "Answer the following query based on the provided summary."
             user_message = f"Query: {query} Summary: {summary}"
-            response = self.make_completion_request(system_message, user_message)
+            response = await self.make_completion_request(system_message, user_message)
             print("Intermediate answer:", response)
             intermediate_answers.append(response)
         system_message = "Combine these answers into a final, concise response."
         user_message = f"Intermediate answers: {intermediate_answers}"
-        final_response = self.make_completion_request(system_message, user_message)
+        final_response = await self.make_completion_request(system_message, user_message)
         return final_response
 
     
-    def get_entities_and_relationships_from_chunk(self, chunk): 
+    async def get_entities_and_relationships_from_chunk(self, chunk): 
         system_message = """You are a financial analyst assistant. Extract key entities and their relationships from the following section of a Draft Red Herring Prospectus (DRHP) of an IPO. Focus on identifying:
 
                 1. **Entities:**
@@ -84,10 +84,10 @@ class ChatCompletion :
                 """
     
         user_message = chunk
-        response = self.make_completion_request(system_message=system_message, user_message=user_message)
+        response = await self.make_completion_request(system_message=system_message, user_message=user_message)
         return response 
 
-    def summarize_relationships(self, entities_and_relations): 
+    async def summarize_relationships(self, entities_and_relations): 
         system_message = """ You are a financial analyst assistant. Summarize the following extracted entities and their relationships into a concise, structured format. Ensure the summary highlights the most important details relevant to analyzing a Draft Red Herring Prospectus (DRHP) of an IPO. Focus on:
 
         1. **Key Entities:**
@@ -126,14 +126,14 @@ class ChatCompletion :
         """
 
         user_message = entities_and_relations
-        response = self.make_completion_request(system_message=system_message, user_message=user_message)
+        response = await self.make_completion_request(system_message=system_message, user_message=user_message)
         return response 
     
-    def summarize_communites(self, description): 
+    async def summarize_communites(self, description): 
         system_message = """ You are an expert in analyzing and summarizing data graphs. Your task is to summarize communities of entities and their relationships in a graph. For each community, provide a meaningful description, including key entities, their roles, the primary relationships between them, and any notable insights.
         """
 
         user_message = f"""The following is a description of a community extracted from a graph:\n\n{description}\n\n.Please summarize this community, highlighting its key entities, relationships and significance."""
         
-        response = self.make_completion_request(system_message=system_message, user_message=user_message)
+        response = await self.make_completion_request(system_message=system_message, user_message=user_message)
         return response 
